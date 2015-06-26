@@ -1,5 +1,5 @@
 (function() {
-    var scene, camera, renderer, sprite, prevFrame = 0;
+    var scene, camera, renderer, sprite, prevFrame = 0, keyboard = new Keyboard();
 
     function createSprite(width, height, color) {
         //var image = new THREE.ImageUtils.loadTexture(image);
@@ -27,7 +27,19 @@
         requestAnimationFrame(update);
         var delta = now - prevFrame;
         prevFrame = now;
-        delta = Math.min(0.1, delta);
+        delta = Math.min(100, delta);
+        if (keyboard.pressed('left')) {
+            sprite.position.x -= 100 * delta / 1000;
+        }
+        if (keyboard.pressed('right')) {
+            sprite.position.x += 100 * delta / 1000;
+        }
+        if (keyboard.pressed('up')) {
+            sprite.position.y -= 100 * delta / 1000;
+        }
+        if (keyboard.pressed('down')) {
+            sprite.position.y += 100 * delta / 1000;
+        }
         render();
     }
 
@@ -36,4 +48,55 @@
     }
 
     window.addEventListener('load', startWebGL);
+
+    function Keyboard() {
+        this.keys = {};
+        this.modifiers = {};
+
+        this.MODIFIERS = ['shift', 'ctrl', 'alt', 'meta'];
+        this.ALIAS = {
+            left: 'ArrowLeft',
+            up: 'ArrowUp',
+            right: 'ArrowRight',
+            down: 'ArrowDown',
+            space: ' '
+        };
+
+        this.onKeyChange = function(event, pressed) {
+            event.preventDefault();
+            this.keys[event.key] = pressed;
+            this.modifiers['shift'] = event.shiftKey;
+            this.modifiers['ctrl'] = event.ctrlKey;
+            this.modifiers['alt'] = event.altKey;
+            this.modifiers['meta'] = event.metaKey;
+        };
+
+        this.pressed = function() {
+            for (var i = 0; i < arguments.length; i++) {
+                var key = arguments[i];
+                if (this.MODIFIERS.indexOf(key) !== -1) {
+                    if (!this.modifiers[key]) {
+                        console.log('first');
+                        return false;
+                    }
+                }
+                else if (Object.keys(this.ALIAS).indexOf(key) !== -1) {
+                    if (!this.keys[this.ALIAS[key]]) {
+                        return false;
+                    }
+                }
+                else if (!this.keys[key.toLowerCase()]) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        var self = this;
+        this.onKeyDown = function(event) {self.onKeyChange(event, true);};
+        this.onKeyUp = function(event) {self.onKeyChange(event, false);};
+
+        document.addEventListener('keydown', this.onKeyDown);
+        document.addEventListener('keyup', this.onKeyUp);
+    }
 })();
